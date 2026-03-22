@@ -3,7 +3,6 @@ import time
 import json
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import threading
 
 app = Flask(__name__, static_folder='web')
 CORS(app)
@@ -28,7 +27,8 @@ def register_pc():
         'last_seen': time.time()
     }
     
-    return jsonify({'status': 'registered'})
+    print(f"✅ PC Registered: {pc_name} ({pc_id})")
+    return jsonify({'status': 'registered', 'pc_id': pc_id})
 
 @app.route('/api/pcs', methods=['GET'])
 def get_pcs():
@@ -50,6 +50,7 @@ def send_command():
         'timestamp': time.time()
     })
     
+    print(f"📨 Command sent to {pc_id}: {command}")
     return jsonify({'status': 'sent', 'command_id': command_id})
 
 @app.route('/api/get_commands/<pc_id>', methods=['GET'])
@@ -69,8 +70,13 @@ def get_commands(pc_id):
 @app.route('/api/report_result', methods=['POST'])
 def report_result():
     data = request.json
-    print(f"Result from {data.get('pc_id')}: {data.get('result')}")
+    print(f"📊 Result from {data.get('pc_id')}: {data.get('result')}")
     return jsonify({'status': 'ok'})
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({'status': 'healthy', 'pcs': len(connected_pcs)})
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
